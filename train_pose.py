@@ -74,6 +74,9 @@ def train(args_override):
         shuffle=False,
         **loader_kwargs)  ## True
 
+    # 先拉起 worker：避免在 CUDA 初始化之后 fork，导致 DataLoader 卡死
+    next(iter(dataloader))
+
     # policy
     print("Loading policy ...")
     policy = PoseDP(

@@ -192,17 +192,17 @@ class RealWorldDataset_Pose(Dataset):
                 self.source_obs_poses.append(source_obs_poses)
                 self.action_poses_s.append(action_poses_s)
 
+        # 预计算矩阵表示，避免每个 epoch 重复做 scipy 旋转转换
+        self.obs_mat = [poses_to_matrix(p)[:, :3, [0, 1, 3]].astype(np.float32) for p in self.source_obs_poses]
+        self.act_mat = [poses_to_matrix(p)[:, :3, [0, 1, 3]].astype(np.float32) for p in self.action_poses_s]
+
     def __len__(self):
         return len(self.source_obs_poses)
 
     def __getitem__(self, index):
 
-        obs_source_pose = self.source_obs_poses[index]
-        action_source_pose = self.action_poses_s[index]
-
-
-        obs_source_pose = poses_to_matrix(obs_source_pose)[:, :3, [0, 1, 3]]
-        action_source_pose = poses_to_matrix(action_source_pose)[:, :3, [0, 1, 3]]
+        obs_source_pose = self.obs_mat[index]
+        action_source_pose = self.act_mat[index]
 
         if self.gripper:
             action_gripper_pose = self.action_poses_g[index]
