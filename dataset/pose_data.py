@@ -1,7 +1,9 @@
 from torch.utils.data import Dataset
 import collections.abc as container_abcs
+import os
+import numpy as np
+import torch
 from scipy.spatial.transform import Rotation as RR
-from  policy.Utils import *
 
 
 def poses_to_matrix(poses):
@@ -114,6 +116,7 @@ class RealWorldDataset_Pose(Dataset):
             sym='z',
             aug=False,
             normalize=False,
+            workspace_path='./source_workspace.npy',
     ):
         assert split in ['train', 'val', 'all']
 
@@ -136,7 +139,7 @@ class RealWorldDataset_Pose(Dataset):
         self.action_poses_g = []
         self.action_poses_gw = []
 
-        source_workspace = np.load('./source_workspace.npy')
+        source_workspace = np.load(workspace_path)
         if self.gripper:
             gripper_workspace = np.load('./gripper_workspace.npy')
 
@@ -253,6 +256,7 @@ class RealWorldDataset_PoseRGBD(Dataset):
             sym='z',
             aug=False,
             normalize=False,
+            workspace_path='./source_workspace.npy',
     ):
         assert split in ['train', 'val', 'all']
 
@@ -281,7 +285,7 @@ class RealWorldDataset_PoseRGBD(Dataset):
         self.target_bbox = []
 
 
-        source_workspace = np.load('./source_workspace.npy')
+        source_workspace = np.load(workspace_path)
         if self.gripper:
             gripper_workspace = np.load('./gripper_workspace.npy')
 

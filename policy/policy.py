@@ -1,8 +1,10 @@
+import torch
+import torch.nn as nn
+
 from policy.diffusion import DiffusionUNetPolicy
 from policy.cnn import DisentangledPoseEncoder, PoseResGateFusion
 from omegaconf import OmegaConf
 from .cnn import RefineNet
-from Utils import *
 
 
 class PoseDP(nn.Module):

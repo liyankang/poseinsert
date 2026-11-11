@@ -43,6 +43,9 @@ def train(args_override):
     # set up device
     set_seed(args.seed)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if device.type == 'cuda':
+        torch.backends.cudnn.benchmark = True
+        torch.set_float32_matmul_precision('high')
 
     # dataset & dataloader
     print("Loading dataset ...")
@@ -55,16 +58,21 @@ def train(args_override):
         normalize=True,
         gripper=False,
         sym_or=False,
+        workspace_path=args.workspace_path,
     )
 
     sampler = torch.utils.data.RandomSampler(dataset)
+    loader_kwargs = {"pin_memory": device.type == 'cuda'}
+    if args.num_workers > 0:
+        loader_kwargs.update(persistent_workers=True, prefetch_factor=4)
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
         collate_fn=collate_fn,
         sampler=sampler,
-        shuffle=False)  ## True
+        shuffle=False,
+        **loader_kwargs)  ## True
 
     # policy
     print("Loading policy ...")
@@ -116,7 +124,8 @@ def train(args_override):
             obs, action = obs_source_pose.to(device), action_source_pose.reshape(action_source_pose.shape[0],action_source_pose.shape[1],-1).to(device)
 
             # forward
-            loss = policy(obs, action, batch_size=action.shape[0])
+            with torch.autocast(device_type=device.type, dtype=torch.bfloat16, enabled=args.amp):
+                loss = policy(obs, action, batch_size=action.shape[0])
             # backward
             loss.backward()
             optimizer.step()
@@ -161,6 +170,8 @@ if __name__ == '__main__':
                         default=2048)
     parser.add_argument('--dropout', action='store', type=float, help='dropout ratio', required=False, default=0.1)
     parser.add_argument('--ckpt_dir', action='store', type=str, help='checkpoint directory', default='logs/mp')  #########################  3:soure pose -> gripper source gripper_w
+    parser.add_argument('--workspace_path', action='store', type=str, default='./source_workspace.npy')
+    parser.add_argument('--amp', action='store_true', help='use bf16 autocast on cuda')
     parser.add_argument('--resume_ckpt', action='store', type=str, help='resume checkpoint file', required=False,
                         default=None)
     parser.add_argument('--resume_epoch', action='store', type=int, help='resume from which epoch', required=False,

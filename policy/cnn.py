@@ -5,7 +5,6 @@ code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(code_dir)
 sys.path.append(f'{code_dir}/../../../../')
 from network_modules import *
-from Utils import *
 
 
 
